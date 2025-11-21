@@ -42,9 +42,9 @@ ENV TZ="UTC" \
     TERM=xterm-256color
 
 RUN if [ "$VARIANT" = "debug" ]; then  \
-      install-php-extensions $PHP_MASTER_EXTENSIONS $PHP_DEV_EXTENSIONS; \
+      install-php-extensions $PHP_RELEASE_EXTENSIONS $PHP_DEBUG_EXTENSIONS; \
     else  \
-      install-php-extensions $PHP_MASTER_EXTENSIONS; \
+      install-php-extensions $PHP_RELEASE_EXTENSIONS; \
     fi \
     && apk add nodejs-current \
                npm \

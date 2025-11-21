@@ -41,50 +41,66 @@ ENV PHP_DEBUG_EXTENSIONS="xdebug pcov" \
 ENV TZ="UTC" \
     TERM=xterm-256color
 
+RUN apk update && apk add curl \
+    build-base \
+    linux-headers \
+    linux-pam \
+    ca-certificates \
+    libstdc++ \
+    openssl-dev \
+    binutils \
+    autoconf \
+    automake \
+    libtool \
+    pkgconf \
+    gcompat \
+    bash \
+    python3 \
+    openssh \
+    alsa-lib \
+    cairo \
+    cups-libs \
+    dbus-libs \
+    eudev-libs \
+    expat \
+    flac \
+    gdk-pixbuf \
+    glib \
+    libgcc \
+    libjpeg-turbo \
+    libpng \
+    libwebp \
+    libx11 \
+    libxcomposite \
+    libxdamage \
+    libxext \
+    libxfixes \
+    tzdata \
+    libexif \
+    udev \
+    xvfb \
+    zlib-dev \
+    chromium \
+    chromium-chromedriver
+
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+ENV NVM_DIR=/root/.nvm
+ARG NODE_VERSION=24
+RUN bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION"
+
+ENV NODE_PATH=$NVM_DIR/versions/node/$NODE_VERSION/lib/node_modules
+ENV PATH=$NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+
+RUN node -v && npm install -g yarn
+
 RUN if [ "$VARIANT" = "debug" ]; then  \
       install-php-extensions $PHP_RELEASE_EXTENSIONS $PHP_DEBUG_EXTENSIONS; \
     else  \
       install-php-extensions $PHP_RELEASE_EXTENSIONS; \
     fi \
-    && apk add openssh  \
-               alsa-lib \
-               cairo \
-               cups-libs \
-               dbus-libs \
-               eudev-libs \
-               expat \
-               flac \
-               gdk-pixbuf \
-               glib \
-               libgcc \
-               libjpeg-turbo \
-               libpng \
-               libwebp \
-               libx11 \
-               libxcomposite \
-               libxdamage \
-               libxext \
-               libxfixes \
-               tzdata \
-               libexif \
-               udev \
-               xvfb \
-               zlib-dev \
-               chromium \
-               chromium-chromedriver \
-    && npm install -g yarn \
     && php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
     && php -r "if (hash_file('sha384', 'composer-setup.php') === 'c8b085408188070d5f52bcfe4ecfbee5f727afa458b2573b8eaaf77b3419b0bf2768dc67c86944da1544f06fa544fd47') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" \
     && php composer-setup.php \
     && php -r "unlink('composer-setup.php');" \
     && mv composer.phar /usr/local/bin/composer
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-ENV BASH_ENV /home/user/.bash_env
-RUN touch "${BASH_ENV}"
-RUN echo '. "${BASH_ENV}"' >> ~/.bashrc
-
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE="${BASH_ENV}" bash
-RUN echo node > .nvmrc
-RUN nvm install 24

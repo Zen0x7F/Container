@@ -3,7 +3,7 @@ name: Continuous Integration
 on: [ push ]
 
 env:
-  REGISTRY_IMAGE: ghcr.io/zen0x7F/container
+  REGISTRY_IMAGE: ghcr.io/zen0x7f/container
 
 jobs:
   build:

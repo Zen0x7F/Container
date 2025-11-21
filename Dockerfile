@@ -46,9 +46,7 @@ RUN if [ "$VARIANT" = "debug" ]; then  \
     else  \
       install-php-extensions $PHP_RELEASE_EXTENSIONS; \
     fi \
-    && apk add nodejs-current \
-               npm \
-               openssh  \
+    && apk add openssh  \
                alsa-lib \
                cairo \
                cups-libs \
@@ -80,3 +78,13 @@ RUN if [ "$VARIANT" = "debug" ]; then  \
     && php composer-setup.php \
     && php -r "unlink('composer-setup.php');" \
     && mv composer.phar /usr/local/bin/composer
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ENV BASH_ENV /home/user/.bash_env
+RUN touch "${BASH_ENV}"
+RUN echo '. "${BASH_ENV}"' >> ~/.bashrc
+
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE="${BASH_ENV}" bash
+RUN echo node > .nvmrc
+RUN nvm install 24

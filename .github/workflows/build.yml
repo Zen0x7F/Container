@@ -66,7 +66,6 @@ jobs:
             echo "No digest returned by build-push-action"
             exit 1
           fi
-          # guardamos fichero con nombre <sha-without-prefix>-<platform_pair>
           echo "$digest" > "${{ runner.temp }}/digests/${digest#sha256:}-${{ env.PLATFORM_PAIR }}"
 
       - name: Upload digest
@@ -124,7 +123,6 @@ jobs:
           echo "Creating manifest for tag: ${TAG}"
           
           shopt -s nullglob
-          # ahora buscamos EXACTAMENTE los ficheros que se descargaron
           files=( * )
           if [ "${#files[@]}" -eq 0 ]; then
             echo "No digest files found in $(pwd) - aborting"

@@ -72,6 +72,7 @@ RUN if [ "$VARIANT" = "debug" ]; then  \
                udev \
                xvfb \
                zlib-dev \
+               git \
                chromium \
                chromium-chromedriver \
     && npm install -g yarn \

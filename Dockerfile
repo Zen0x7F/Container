@@ -1,106 +1,42 @@
-FROM php:8.4-alpine
+FROM ubuntu:24.04
 
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
-
+ARG DEBIAN_FRONTEND=noninteractive
 ARG VARIANT="release"
-
-ENV PHP_DEBUG_EXTENSIONS="xdebug pcov" \
-    PHP_RELEASE_EXTENSIONS="\
-            ev \
-            gd \
-            pdo \
-            pdo_mysql \
-            pdo_pgsql \
-            zip \
-            csv \
-            soap \
-            brotli \
-            intl \
-            bcmath \
-            bitset \
-            calendar \
-            mbstring \
-            mcrypt \
-            mysqli \
-            mongodb \
-            pgsql \
-            xsl \
-            gmp \
-            sockets \
-            ftp \
-            ssh2 \
-            uuid \
-            curl \
-            redis \
-            exif \
-            bz2 \
-            pcntl \
-            opcache \
-            yaml"
-
-ENV TZ="UTC" \
-    TERM=xterm-256color
-
-RUN apk update && apk add curl \
-    build-base \
-    linux-headers \
-    linux-pam \
-    ca-certificates \
-    libstdc++ \
-    openssl-dev \
-    binutils \
-    autoconf \
-    automake \
-    libtool \
-    pkgconf \
-    gcompat \
-    bash \
-    python3 \
-    openssh \
-    alsa-lib \
-    cairo \
-    cups-libs \
-    dbus-libs \
-    eudev-libs \
-    expat \
-    flac \
-    gdk-pixbuf \
-    glib \
-    libgcc \
-    libjpeg-turbo \
-    libpng \
-    libwebp \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    tzdata \
-    libexif \
-    udev \
-    xvfb \
-    zlib-dev \
-    chromium \
-    chromium-chromedriver
-
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-
-ENV NVM_DIR=/root/.nvm
 ARG NODE_VERSION=24
-RUN bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION"
+ARG TZ="UTC"
 
-ENV NODE_PATH=$NVM_DIR/versions/node/$NODE_VERSION/lib/node_modules
-ENV PATH=$NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+ && add-apt-repository -y ppa:ondrej/php \
+ && apt-get update
 
-RUN node -v && npm install -g yarn
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        php8.4-cli php8.4-fpm php8.4-dev php8.4-common php8.4-xml php8.4-mbstring \
+        php8.4-intl php8.4-gd php8.4-curl php8.4-zip php8.4-bcmath \
+        php8.4-mysql php8.4-pgsql php8.4-soap php8.4-xsl php8.4-gmp \
+        pkg-config php-pear php8.4-dev libssl-dev libxml2-dev zlib1g-dev \
+        libzip-dev libpng-dev libjpeg-dev libwebp-dev libonig-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN if [ "$VARIANT" = "debug" ]; then  \
-      install-php-extensions $PHP_RELEASE_EXTENSIONS $PHP_DEBUG_EXTENSIONS; \
-    else  \
-      install-php-extensions $PHP_RELEASE_EXTENSIONS; \
-    fi \
-    && php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
-    && php -r "if (hash_file('sha384', 'composer-setup.php') === 'c8b085408188070d5f52bcfe4ecfbee5f727afa458b2573b8eaaf77b3419b0bf2768dc67c86944da1544f06fa544fd47') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" \
-    && php composer-setup.php \
-    && php -r "unlink('composer-setup.php');" \
-    && mv composer.phar /usr/local/bin/composer
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+    && apt-get update && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g yarn
+
+RUN set -eux; \
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
+    EXPECTED_SIG=$(curl -fsSL https://composer.github.io/installer.sig); \
+    ACTUAL_SIG=$(php -r "echo hash_file('sha384','composer-setup.php');"); \
+    if [ "$EXPECTED_SIG" != "$ACTUAL_SIG" ]; then \
+        echo 'Composer installer corrupt'; \
+        rm composer-setup.php; \
+        exit 1; \
+    fi; \
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
+    rm -f composer-setup.php
+
+RUN php -v || true
+RUN node -v || true
+RUN npm -v || true
+RUN composer --version || true
+RUN yarn --version || true

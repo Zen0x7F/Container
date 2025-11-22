@@ -18,6 +18,7 @@ ENV TZ=${TZ} \
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
+        chromium chromium-chromedriver \
         ca-certificates curl gnupg lsb-release software-properties-common apt-transport-https \
         build-essential pkg-config autoconf automake make gcc g++ git wget unzip zip python3 python3-pip tzdata locales; \
     \
